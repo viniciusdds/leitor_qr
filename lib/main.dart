@@ -1,14 +1,13 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-// Criar um arquivo para adicionar esse controller
 class QRCodeController extends GetxController {
   final RxString qrCodeData = ''.obs;
 
@@ -28,92 +27,50 @@ class MyApp extends StatelessWidget {
 
 class HomeScreen extends StatelessWidget {
   final QRCodeController qrCodeController = Get.put(QRCodeController());
+  final dados = "".obs;
+  TextEditingController inputController = TextEditingController();
+
+  double size = 280.0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade300,
       appBar: AppBar(
-        title: Text('QR Code Scanner'),
+        title: Text('QR Code Generator'),
       ),
-      body: SizedBox(
-        width: double.infinity,
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 100,
-              height: 80,
-              child: InkWell(
-                onTap: ()=> Get.to(() => buildQrView(context)),
-                child: Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                       Expanded(
-                         child: Padding(
-                           padding: const EdgeInsets.only(top: 10),
-                           child: Icon(Icons.qr_code_scanner),
-                         ),
-                       ),
-                       Padding(
-                         padding: const EdgeInsets.symmetric(vertical: 10),
-                         child: Text(
-                             "Scan Code",
-                             style: TextStyle(
-                               fontWeight: FontWeight.bold
-                             ),
-                         ),
-                       )
-                    ],
-                  ),
-                ),
+            Obx(() => QrImageView(
+                data: dados.value,
+                version: QrVersions.auto,
+                size: 200.0,
               ),
             ),
-            Obx(() => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 50),
-              child: Container(
-                child: Text(
-                  qrCodeController.qrCodeData.value,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            ElevatedButton(
+              onPressed: () => _generateQRCode(inputController.text),
+              child: Text('Generate QR Code'),
+            ),
+            TextFormField(
+              decoration: const InputDecoration(
+                icon: Icon(Icons.person),
+                hintText: 'Digite o Código',
+                labelText: 'Codigo *'
               ),
-            )),
+              controller: inputController,
+              validator: (String? value){
+                return (value == null) ? 'Informe um código' : null;
+              },
+            )
           ],
         ),
       ),
     );
   }
 
-  // Adicionar no controller também
-  Widget buildQrView(BuildContext context){
-    var scanArea = (Get.width < 400 ||
-        Get.height < 400)
-        ? 150.0
-        : 300.0;
-
-    return QRView(
-      key: GlobalKey(),
-      onQRViewCreated: _onQRViewCreated,
-      overlay: QrScannerOverlayShape(
-        borderColor: Colors.green,
-        borderRadius: 10,
-        borderLength: 30,
-        borderWidth: 10,
-        cutOutSize: scanArea,
-      ),
-    );
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    controller.scannedDataStream.listen((Barcode scanData) {
-      qrCodeController.updateQRCodeData(scanData.code!);
-      Get.back();
-    });
+  void _generateQRCode(String data) {
+    qrCodeController.updateQRCodeData(data);
+    dados.value = data;
   }
 }
